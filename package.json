@@ -1,5 +1,6 @@
 {
   "name": "mysql-state",
+  "type": "module",
   "version": "1.0.0",
   "description": "A module that can save the state of a database and restore a previously saved state",
   "main": "main.js",
@@ -30,6 +31,8 @@
     "dotenv": "^8.2.0",
     "inquirer": "^8.0.0",
     "mysql-import": "^5.0.21",
-    "mysqldump": "^3.2.0"
+    "mysql2": "^2.2.5",
+    "mysqldump": "^3.2.0",
+    "ora": "^5.4.0"
   }
 }
