@@ -1,7 +1,10 @@
-import fs from "fs"
+import fs from "fs";
+import chalk from "chalk";
 
 class Stater {
     constructor() {
+        console.log("\nWelcome to MySQL Stater    -by unkobweb")
+
         if (!fs.existsSync("./config.json")) {
             console.log("Create config.json")
             fs.writeFileSync("./config.json", JSON.stringify([]))
@@ -13,7 +16,7 @@ class Stater {
         }
 
         const childs = fs.readdirSync("./states")
-        console.log(`'states' folder found ! ${childs.length} states loaded`)
+        console.log(`\n${childs.length == 0 ? chalk.red("No state found") : chalk.yellow(childs.length) + " states loaded !"}\n`)
 
         this.state = JSON.parse(fs.readFileSync("./config.json", 'utf-8'))
     }
@@ -26,7 +29,7 @@ class Stater {
             return number
         }
         const dateNeedTransform = new Date(date)
-        return twoDigits(dateNeedTransform.getHours()) + ":" + twoDigits(dateNeedTransform.getMinutes()) + ":" + twoDigits(dateNeedTransform.getSeconds()) + "-" + twoDigits(dateNeedTransform.getDay()) + "/" + twoDigits(dateNeedTransform.getMonth()) + "/" + dateNeedTransform.getFullYear()
+        return twoDigits(dateNeedTransform.getHours()) + ":" + twoDigits(dateNeedTransform.getMinutes()) + ":" + twoDigits(dateNeedTransform.getSeconds()) + "-" + twoDigits(dateNeedTransform.getDate()) + "/" + twoDigits(dateNeedTransform.getMonth() + 1) + "/" + dateNeedTransform.getFullYear()
     }
 
     saveState() {
@@ -37,7 +40,7 @@ class Stater {
     createState({ name, filename }) {
         this.state.push({
             name: name,
-            filename: filename + ".sql",
+            filename: filename,
             createdAt: new Date()
         })
         this.saveState()

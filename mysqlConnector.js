@@ -7,6 +7,8 @@ import Importer from 'mysql-import';
 import stater from "./stater.js";
 import ora from 'ora';
 import fs from 'fs';
+import chalk from 'chalk';
+import splitFile from 'split-file';
 
 class MysqlConnector {
     constructor() {
@@ -48,41 +50,48 @@ class MysqlConnector {
             process.exit(1)
         }
 
-        const fileName = new Date().getTime()
+        const fileName = "./states/" + new Date().getTime() + ".sql"
 
         const spinner = ora(`Dumping ${process.env.DB_DATABASE} database..`).start()
         const startDate = Math.floor(new Date().getTime() / 1000)
 
-        await mysqldump({
-            connection: {
-                host: this.host,
-                user: this.user,
-                password: this.password,
-                database: this.database
-            },
-            dumpToFile: "./states/" + fileName + ".sql"
-        })
+        try {
+            await mysqldump({
+                connection: {
+                    host: this.host,
+                    user: this.user,
+                    password: this.password,
+                    database: this.database
+                },
+                dumpToFile: fileName
+            })
 
-        const data = fs.readFileSync("./states/" + fileName + ".sql"); //read existing contents into data
-        const fd = fs.openSync("./states/" + fileName + ".sql", 'w+');
+            const data = fs.readFileSync(fileName); //read existing contents into data
+            const fd = fs.openSync(fileName, 'w+');
 
-        fs.writeSync(fd, `DROP DATABASE IF EXISTS ${this.database};\n\nCREATE DATABASE ${this.database};\n\nUSE ${this.database};\n\n`); //write new data
-        fs.appendFile(fd, data, (err) => {
-            if (err) {
-                console.log("ERR :", err)
+            fs.writeSync(fd, `DROP DATABASE IF EXISTS ${this.database};\n\nCREATE DATABASE ${this.database};\n\nUSE ${this.database};\n\n`); //write new data
+            fs.appendFile(fd, data, (err) => {
+                if (err) {
+                    console.log("ERR :", err)
+                }
+            });
+            fs.close(fd, (err) => {
+                if (err) {
+                    console.log("ERR :", err)
+                }
+            });
+
+            spinner.stop()
+            const stopDate = Math.floor(new Date().getTime() / 1000)
+
+            console.log(chalk.bold.green(`Db ${this.database} dumped in ${this.secondsToMinutes(stopDate - startDate)} !`))
+            stater.createState({ name: name, filename: fileName })
+        } catch (error) {
+            if (spinner.isSpinning) {
+                spinner.stop()
             }
-        });
-        fs.close(fd, (err) => {
-            if (err) {
-                console.log("ERR :", err)
-            }
-        });
-
-        spinner.stop()
-        const stopDate = Math.floor(new Date().getTime() / 1000)
-
-        console.log(`Db ${this.database} dumped in ${this.secondsToMinutes(stopDate - startDate)} !`)
-        stater.createState({ name: name, filename: fileName })
+            console.log(chalk.bold.red("\nError while dumping, complete stack here :\n\n") + error)
+        }
     }
 
     async restoreState(filename) {
@@ -95,7 +104,7 @@ class MysqlConnector {
         const spinner = ora(`Restore ${process.env.DB_DATABASE} database..`).start()
         const startDate = Math.floor(new Date().getTime() / 1000)
 
-        importer.import(`./states/${filename}`)
+        importer.import(filename)
 
         spinner.stop()
         const stopDate = Math.floor(new Date().getTime() / 1000)

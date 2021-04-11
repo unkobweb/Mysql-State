@@ -8,7 +8,7 @@ prompt({
     type: "list",
     name: "choice",
     message: "What you want to do ?",
-    choices: [{ name: "Save the actual state fo my db", value: "save" }, { name: "Restore a save state of the db", value: "restore" }, { name: "Quit this script", value: "quit" }]
+    choices: [{ name: "Save the actual state of my db", value: "save" }, { name: "Restore a save state of the db", value: "restore" }, { name: "Quit this script", value: "quit" }]
 }).then(answers => {
     switch (answers.choice) {
         case "save":
