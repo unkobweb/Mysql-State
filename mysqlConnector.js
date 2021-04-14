@@ -3,12 +3,11 @@ import dotenv from 'dotenv';
 dotenv.config(path.resolve("./.env"));
 import mysql from "mysql2";
 import mysqldump from 'mysqldump';
-import Importer from 'mysql-import';
 import stater from "./stater.js";
 import ora from 'ora';
 import fs from 'fs';
 import chalk from 'chalk';
-import splitFile from 'split-file';
+import { exec } from 'child_process';
 
 class MysqlConnector {
     constructor() {
@@ -63,6 +62,14 @@ class MysqlConnector {
                     password: this.password,
                     database: this.database
                 },
+                dump: {
+                    data: {
+                        format: false,
+                        verbose: false,
+                        maxRowsPerInsertStatement: 100000,
+                        returnFromFunction: true 
+                    }
+                },
                 dumpToFile: fileName
             })
 
@@ -95,16 +102,18 @@ class MysqlConnector {
     }
 
     async restoreState(filename) {
-        const importer = new Importer({
-            host: this.host,
-            user: this.user,
-            password: this.password,
-            database: this.database
-        })
+        function importer(){
+            return new Promise((resolve, reject) => {
+                exec(`C:\\xampp\\mysql\\bin\\mysql -u${this.user} -p${this.password} -h${this.host} ${this.database} < ${filename}`, (err, stdout, stderr) => {
+                    if (err) { reject() }
+                    resolve()
+                });
+            })
+        }
         const spinner = ora(`Restore ${process.env.DB_DATABASE} database..`).start()
         const startDate = Math.floor(new Date().getTime() / 1000)
 
-        importer.import(filename)
+        await importer.call(this)
 
         spinner.stop()
         const stopDate = Math.floor(new Date().getTime() / 1000)
